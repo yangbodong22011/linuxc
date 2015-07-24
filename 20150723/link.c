@@ -5,6 +5,8 @@
 	> Created Time: Thu 23 Jul 2015 11:41:41 AM CST
  ************************************************************************/
 
+/*为了将链表的各种操作练习的更熟练，只写一部分代码不好写，所以自就写了个简单学生系统，目的是熟悉链表的各操作*/
+
 #include<stdio.h>
 #include<stdlib.h>
 #define LEN sizeof(struct student)
