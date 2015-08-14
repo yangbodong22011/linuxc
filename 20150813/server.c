@@ -15,7 +15,8 @@
 #include<time.h>
 #include<pthread.h>
 #include"my_recv.c"
-#define SERV_PORT        5000
+//#define SERV_PORT        5000
+#define SERV_PORT        4507
 #define LISTENQ          30
 #define BUFSIZE          1024
 #define LEN     sizeof(struct users)
@@ -78,7 +79,108 @@ void quit(struct regi_sign,int);
 void near_friend(struct message,int);
 void view_friend(struct message,int);
 void add_friend(struct message,int);
+void out_line(struct message,int);
+void view_online_friend(struct message,int);
+void del_friend(struct message,int);
 
+void del_friend(struct message chat,int i)
+{
+    struct  users *p1;
+    p1 = head->next;
+    int k;
+    struct message near;
+    memset(&near,0,LEN1);
+    near = chat;
+    char  near_buf[BUFSIZE];
+    printf("11111111\n");
+    while(p1)
+    {
+        printf("555555\n");
+        if(!(strcmp((p1->user).username,near.from)))
+        {
+            printf("22222222\n");
+            for(k = 0;k < 10;k++)
+            {
+                printf("%s\n",(p1->friend[k].username));
+                if(!(strcmp(near.to,(p1->friend)[k].username)))
+                {
+                    //memcpy((p1->friend)[k].username," ",10);
+                    printf("777777777\n");
+                    for(k;k < 10;k++)
+                    {
+                        printf("kkkkkkk:%d\n",k);
+                        memcpy((p1->friend)[k].username,(p1->friend)[k+1].username,10);
+                    }
+                    break;
+                    p1->friend_num--;
+                }
+            }
+            
+        }        
+        p1 = p1->next;
+    }
+    save();
+    memset(near_buf,0,BUFSIZE);
+    memcpy(near_buf,&near,LEN1);
+    printf("33333333\n");
+    if(send(connect_info[i].fd,near_buf,BUFSIZE,0) != BUFSIZE)
+    {
+        my_err("send",__LINE__);
+        pthread_exit(0);
+    }
+    printf("4444444\n");
+}
+
+void view_online_friend(struct message chat,int i)
+{
+    struct  users *p1;
+    p1 = head->next;
+    int k,j;
+    struct message near;
+    struct user    name[10];
+    memset(&name,0,sizeof(struct user));
+    memset(&near,0,LEN1);
+    near = chat;
+    char  near_buf[BUFSIZE];
+    near.type = 'z';
+    while(p1)
+    {
+        if(!(strcmp((p1->user).username,near.from)))
+        {
+            for(k = 0;k < 10;k++)
+                memcpy(name[k].username,(p1->friend)[k].username,10);
+            for(k = 0;k < 10;k++)
+            {
+                for(j = 0;j < 30;j++)
+                {
+                    if((!strcmp(name[k].username,connect_info[j].name)) && (connect_info[j].fd != -1))
+                        {
+                            memcpy(near.name[k].username,connect_info[j].name,10);
+                        }
+                }
+            }
+            
+        }
+        p1 = p1->next;
+    }
+    memset(near_buf,0,BUFSIZE);
+    memcpy(near_buf,&near,LEN1);
+    if(send(connect_info[i].fd,near_buf,BUFSIZE,0) != BUFSIZE)
+    {
+        my_err("send",__LINE__);
+        pthread_exit(0);
+    }
+}
+void out_line(struct message chat,int i)
+{
+    struct message near;
+    memset(&near,0,LEN1);
+    near = chat;
+    connect_info[i].fd = -1;
+    save();
+    printf("[用户]%s下线了 \t%s\n",near.from,my_time());
+    pthread_exit(0);
+}
 void add_friend(struct message chat,int i)
 {
     struct users *p1;
@@ -88,12 +190,21 @@ void add_friend(struct message chat,int i)
     memset(&near,0,LEN1);
     memset(near_buf,0,BUFSIZE);
     near = chat;
+    printf("chat.from : %s\n",near.from);
+    printf("chat.to  : %s\n",near.to);
     while(p1)
     {
         if(!(strcmp(near.from,(p1->user).username)))
+        {
             memcpy(((p1->friend)[p1->friend_num].username),near.to,10);
+            p1->friend_num++;
+        }
         if(!(strcmp(near.to,(p1->user).username)))
+        {
             memcpy(((p1->friend)[p1->friend_num].username),near.from,10);
+            p1->friend_num++;  //增加完之后让他的朋友数加1
+        }
+        p1 = p1->next;
         save();
     }
     memcpy(near_buf,&near,LEN1);
@@ -110,16 +221,13 @@ void view_friend(struct message chat,int i)
     int k;
     struct message near;
     memset(&near,0,LEN1);
-       near = chat;
+    near = chat;
     char  near_buf[BUFSIZE];
     near.type = 'v';
-    printf("11111111\n");
     while(p1)
     {
-        printf("555555\n");
         if(!(strcmp((p1->user).username,near.from)))
         {
-            printf("22222222\n");
             for(k = 0;k < 10;k++)
                 memcpy(near.name[k].username,(p1->friend)[k].username,10);
         }
@@ -127,22 +235,22 @@ void view_friend(struct message chat,int i)
     }
     memset(near_buf,0,BUFSIZE);
     memcpy(near_buf,&near,LEN1);
-    printf("33333333\n");
     if(send(connect_info[i].fd,near_buf,BUFSIZE,0) != BUFSIZE)
     {
         my_err("send",__LINE__);
         pthread_exit(0);
     }
-    printf("4444444\n");
 }
 void near_friend(struct message chat,int i)
 {
     int  k;
     struct message near;
     char   near_buf[BUFSIZE];
-    near.type = 'f';
+    memset(&near,0,LEN1);
+    near = chat;
     for(k = 0;k < 30;k++)
     {
+       // printf("connect_info[k].fd :%d,connect_info[k].name:%s\n",connect_info[k].fd,connect_info[k].name);
         if(connect_info[k].fd != -1)
             memcpy(near.name[k].username,connect_info[k].name,10);
     }
@@ -160,6 +268,7 @@ void quit(struct regi_sign account,int i)
     struct regi_sign quit;
     quit = account;
     connect_info[i].fd = -1;
+    save();
     printf("[用户]%s下线了 \t%s\n",quit.username,my_time());
     pthread_exit(0);
 }
@@ -230,7 +339,7 @@ struct users* apply_account(struct regi_sign account,int i)
         p1 = p1->next;
     }
     p2 = (struct users*)malloc(LEN);
-    memset(p2,0,LEN);         //对刚malloc的结构体进行清空
+    //memset(p2,0,LEN);         //对刚malloc的结构体进行清空
     strcpy((p2->user).username,apply.username);
     strcpy(p2->password,apply.password);
     p1->next = p2;
@@ -269,9 +378,6 @@ struct users* read_input()
     fclose(fp);
     return (head);
 }
-
-
-
 void *client_t(void *arg)
 {
     int i = *(int *)arg;
@@ -306,7 +412,6 @@ void *client_t(void *arg)
         if(account.flag == 'q')  //退出
         {
             pthread_mutex_unlock(&mutex);
-            printf("shoudao\n");
             quit(account,i);
         }
     }
@@ -314,11 +419,14 @@ void *client_t(void *arg)
     {
         struct    message  chat;
         char      recv_buf[BUFSIZE];
+        int       ret;
         memset(&chat,0,LEN1);
         memset(recv_buf,0,BUFSIZE);
         printf("wait\n");
-        if(recv(connect_info[i].fd,recv_buf,BUFSIZE,0)!= BUFSIZE)
+        if((ret = recv(connect_info[i].fd,recv_buf,BUFSIZE,0))!= BUFSIZE)
         {
+            printf("ret : %d\n",ret);
+            printf("%s\n",recv_buf);
             my_err("recv",__LINE__);
             pthread_exit(0);
         }
@@ -329,14 +437,32 @@ void *client_t(void *arg)
             case 'f':   //查看附近的人
             {
                 near_friend(chat,i);
+                break;
             }
             case 'v':   //查看所有好友
             {
                 view_friend(chat,i);
+                break;
             }
             case 't':   //添加好友
             {
                 add_friend(chat,i);
+                break;
+            }
+            case 'g':   //下线
+            {
+                out_line(chat,i);
+                break;
+            }
+            case 'z':   //在线好友
+            {
+                view_online_friend(chat,i);
+                break;
+            }
+            case 's':
+            {
+                del_friend(chat,i);
+                break;
             }
 
 
@@ -399,5 +525,4 @@ int main(int argc,char *argv[])
         pthread_create(&thid,NULL,client_t,(void*)&f);
     }
      return 0;
-
 }

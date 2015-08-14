@@ -97,12 +97,52 @@ int apply_account();
 void quit();
 void * sign_func();
 void login_menu();
-int near_friend();
-void admin_friend();
-int view_friend();
+int near_friend();    //附近的人
+int admin_friend();   //好友管理
+int view_friend();    //查看所有好友
 int view_online_friend();
 int add_friend();
+void out_line();
+void del_friend();
 
+void del_friend()
+{
+    char   near_buf[BUFSIZE];
+    struct message near;
+
+    memset(&near,0,LEN1);
+    memset(near_buf,0,BUFSIZE);
+    near.type = 's';
+    memcpy(near.from,myname,10);
+    printf("请输入要删除的好友姓名\n");
+    my_input(near.to,10);
+    memcpy(near_buf,&near,LEN1);
+    if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
+    {
+        my_err("send",__LINE__);
+        exit(0);
+    }
+
+}
+void out_line()
+{
+    char   near_buf[BUFSIZE];
+    struct message near;
+
+    memset(&near,0,LEN1);
+    memset(near_buf,0,BUFSIZE);
+    near.type = 'g';
+    memcpy(near.from,myname,10);
+    memcpy(near_buf,&near,LEN1);
+    if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
+    {
+        my_err("send",__LINE__);
+        exit(0);
+    }
+    close(conn_fd);
+    exit(0);
+
+}
 int add_friend()
 {
     char   near_buf[BUFSIZE];
@@ -111,7 +151,7 @@ int add_friend()
     memset(&near,0,LEN1);
     memset(near_buf,0,BUFSIZE);
     near.type = 't';
-    strcmp(near.from,myname);
+    memcpy(near.from,myname,10);
     printf("请输入要添加的好友姓名\n");
     my_input(near.to,10);
     memcpy(near_buf,&near,LEN1);
@@ -120,11 +160,26 @@ int add_friend()
         my_err("send",__LINE__);
         exit(0);
     }
-    return 0;
 
 }
 int view_online_friend()
-{}
+{
+    char   near_buf[BUFSIZE];
+    struct message near;
+
+    memset(&near,0,LEN1);
+    memset(near_buf,0,BUFSIZE);
+    near.type = 'z';
+    memcpy(near.from,myname,10);
+    memcpy(near_buf,&near,LEN1);
+    if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
+    {
+        my_err("send",__LINE__);
+        exit(0);
+    }
+}
+
+
 int view_friend()
 {
     char   near_buf[BUFSIZE];
@@ -133,17 +188,16 @@ int view_friend()
     memset(&near,0,LEN1);
     memset(near_buf,0,BUFSIZE);
     near.type = 'v';
-    strcmp(near.from,myname);
+    memcpy(near.from,myname,10);
     memcpy(near_buf,&near,LEN1);
     if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
     {
         my_err("send",__LINE__);
         exit(0);
     }
-    return 0;
 }
 
-void admin_friend()
+int admin_friend()
 {
     char   choice[20];
     do
@@ -182,7 +236,15 @@ void admin_friend()
                 add_friend();
                 break;
             }
-
+            case 4:
+            {
+                del_friend();
+                break;
+            }
+            case 0:
+            {
+                return 0;
+            }
         }
 
     }while(strcmp(choice,"-1"));
@@ -195,14 +257,13 @@ int near_friend()
     memset(&near,0,LEN1);
     memset(near_buf,0,BUFSIZE);
     near.type = 'f';
-    strcmp(near.from,myname);
+    memcpy(near.from,myname,10);
     memcpy(near_buf,&near,LEN1);
     if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
     {
         my_err("send",__LINE__);
         exit(0);
     }
-    return 0 ;
 }
 void login_menu()
 {
@@ -253,7 +314,7 @@ void login_menu()
             }
             case 0:
             {
-                quit();
+                out_line();
             }
         }
     }while(strcmp(choice,"-1"));
@@ -266,6 +327,9 @@ void *sign_func()
         char   recv_buf[BUFSIZE];
         memset(&chat,0,LEN1);
         memset(recv_buf,0,BUFSIZE);
+        //printf("wait\n");
+        //printf("conn_fd:%d\n",conn_fd);
+        //sleep(1);
         if(recv(conn_fd,recv_buf,BUFSIZE,0) != BUFSIZE)
         {
             my_err("recv",__LINE__);
@@ -279,10 +343,11 @@ void *sign_func()
                 int i;
                 printf("\n");
                 printf("---------------------\n");
-                printf("他们都在线，可以加好友或者找他们聊天哦！\n");
+                printf("他们都在线，可以加好友或者找他们聊天哦，打个招呼吧！\n");
                 for(i = 0;i < 30;i++)
                 {
-                    printf("%s",chat.name[i].username);
+                    if(strcmp(chat.name[i].username,chat.from))
+                        printf("%s",chat.name[i].username);
                 }
                 break;
             }
@@ -290,16 +355,37 @@ void *sign_func()
             {
                 int i ;
                 printf("\n");
-                printf("这是你全部好友\n");
+                printf("这是您的全部好友\n");
                 for(i = 0;i < 10;i++)
                 {
-                    printf("%s",chat.name[i].username);
+                    if(strcmp(chat.name[i].username,chat.from))
+                        printf("%s",chat.name[i].username);
                 }
                 break;
             }
             case 't':
             {
-                printf("%s 已经成为您的好友了\n",chat.to);
+                printf("\n");
+                printf("[用户]%s 已经成为您的好友了\n",chat.to);
+                break;
+            }
+            case 'z':
+            {
+                int i;
+                printf("\n");
+                printf("这是您的在线好友\n");
+                for(i = 0;i < 10;i++)
+                {
+                    if(strcmp(chat.name[i].username,chat.from))
+                        printf("%s",chat.name[i].username);
+                }
+                break;
+            }
+            case 's':
+            {
+                printf("\n");
+                printf("[用户]%s 已经被您删除\n",chat.to);
+                break;
             }
         }
     }
@@ -320,7 +406,6 @@ void quit()             //客户端退出函数，目的是为了让服务器端
     {
         my_err("quit error",__LINE__);
     }
-    printf("ret : %d\n",ret);
     close(conn_fd);
     exit(0);
 }
