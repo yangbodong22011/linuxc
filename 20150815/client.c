@@ -21,7 +21,10 @@
 #define R_NAPS  'y'
 #define BUFSIZE 1024
 #define LEN1      sizeof(struct message)
-int       conn_fd;    //只需要一个conn_fd;
+int       conn_fd;     //只需要一个conn_fd
+int       b=0;
+int       c=10;
+int       d=20;
 pthread_mutex_t   mutex;
 struct user 
 {
@@ -71,6 +74,7 @@ char             myname[10];        //存自己用户的名字
 struct  user     friend[10];  
 struct  user     member[10];
 struct  group    group[3];
+struct message   chat_t[30];    //加好友，离线消息，群管理
 
 char * my_time()
 {
@@ -116,8 +120,118 @@ int build_group();
 int view_group();
 int public_chat();
 void view_chat_record();
+int message_ment();
+void add_friend_req();
+void accept_add(int);
 
-void view_chat_record()
+void accept_add(int k)
+{
+    int t;
+    char choice;
+    struct message chat;
+    chat = chat_t[k];
+    printf("[系统提示]用户 %s 想添加您为好友，同意输入y,不同意输入n\n",chat.from);
+    setbuf(stdin,NULL);
+    scanf("%c",&choice);
+    switch(choice)
+    {
+        case 'y':
+        {
+            char near_buf[BUFSIZE];
+            memset(near_buf,0,BUFSIZE);
+            chat.type = 't';
+            memcpy(near_buf,&chat,LEN1);
+            if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
+            {
+                my_err("send",__LINE__);
+            }
+            printf("[用户] %s，已经成为您的好友了\n",chat.from);
+            break;
+        }
+        case 'n':
+        {
+            printf("\n");
+            char near_buf[BUFSIZE];
+            memset(near_buf,0,BUFSIZE);
+            chat.type = 'e';
+            memcpy(near_buf,&chat,LEN1);
+            if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
+            {
+                my_err("send",__LINE__);
+            }
+            printf("您拒绝了用户 %s 的添加好友请求\n",chat.from);
+            break;
+        }
+    }
+    for(t = k;t < 10;t++)
+    {
+        chat_t[t] = chat_t[t+1];
+    }
+        b--;
+}
+void add_friend_req()   //好友添加消息通知的显示
+{
+    int k,t,choice;
+    system("clear");
+    printf("-----------------------------------------%d\n",b);
+    for(k = 0,t = 1;k < b;k++,t++)
+    {
+        printf("[序号]%d 用户“%s” 想添加您为好友\n",t,chat_t[k].from);
+    }
+    printf("请输入要处理的序号：");
+    scanf("%d",&choice);
+    accept_add(choice-1);
+}
+int message_ment()      //通知类消息管理
+{
+    char choice[20];
+    do
+    {
+        printf("1:添加好友请求\n");
+        printf("2:申请入群请求\n");
+        printf("3:离线消息查看\n");
+        printf("4:文件发送请求\n");
+        printf("0:返回上级菜单\n");
+        while(1)
+        {  
+            printf("请选择(0 ~ 4)：");
+            setbuf(stdin,NULL);
+            scanf("%s",choice);
+            if((!strcmp(choice,"0")) || (!strcmp(choice,"1")) ||(!strcmp(choice,"2"))||(!strcmp(choice,"3")) || (!strcmp(choice,"4")))
+                break;    
+            else
+             {
+                 printf("\n无效输入，请重新输入\n");
+             }
+        }
+        switch(atoi(choice))
+        {
+            case 1:
+            {
+                add_friend_req();
+                break;
+            }
+            case 2:
+            {
+                break;
+            }
+            case 3:
+            {
+                break;
+            }
+            case 4:
+            {
+                break;
+            }
+            case 0:
+            {
+                return 0;
+            }
+        }
+    }while(strcmp(choice,"-1"));
+
+}
+void view_chat_record()     //查看聊天记录
 {
     struct message near;
     memset(&near,0,LEN1);
@@ -272,19 +386,21 @@ int pri_chat()
 int chat_with()
 {
     char   choice[20];
+    system("clear");
     do
     {
         printf("1:我要私聊\n");
         printf("2:查看我的群\n");
         printf("3:我要建群\n");
         printf("4:我要群聊\n");
+        printf("5:消息管理\n");
         printf("0:返回上级菜单\n");
         while(1)
         {  
-            printf("请选择(0 ~ 4)：");
+            printf("请选择(0 ~ 5)：");
             setbuf(stdin,NULL);
             scanf("%s",choice);
-            if((!strcmp(choice,"0")) || (!strcmp(choice,"1")) ||(!strcmp(choice,"2"))||(!strcmp(choice,"3")) || (!strcmp(choice,"4")))
+            if((!strcmp(choice,"0")) || (!strcmp(choice,"1")) ||(!strcmp(choice,"2"))||(!strcmp(choice,"3")) || (!strcmp(choice,"4"))||(!strcmp(choice,"5")))
                 break;    
             else
              {
@@ -311,6 +427,11 @@ int chat_with()
             case 4:
             {
                 public_chat();
+                break;
+            }
+            case 5:
+            {
+                message_ment();
                 break;
             }
             case 0:
@@ -411,25 +532,26 @@ int view_friend()
         my_err("send",__LINE__);
         exit(0);
     }
-    sleep(20);
 }
 
 int admin_friend()
 {
     char   choice[20];
+    system("clear");
     do
     {
         printf("1:查看所有好友\n");
         printf("2:查看在线好友\n");
         printf("3:添加好友\n");
         printf("4:删除好友\n");
+        printf("5:消息管理\n");
         printf("0:返回上级菜单\n");
         while(1)
         {  
-            printf("请选择(0 ~ 4)：");
+            printf("请选择(0 ~ 5)：");
             setbuf(stdin,NULL);
             scanf("%s",choice);
-            if((!strcmp(choice,"0")) || (!strcmp(choice,"1")) ||(!strcmp(choice,"2"))||(!strcmp(choice,"3")) || (!strcmp(choice,"4")))
+            if((!strcmp(choice,"0")) || (!strcmp(choice,"1")) ||(!strcmp(choice,"2"))||(!strcmp(choice,"3")) || (!strcmp(choice,"4")) || (!strcmp(choice,"5")))
                 break;    
             else
              {
@@ -456,6 +578,11 @@ int admin_friend()
             case 4:
             {
                 del_friend();
+                break;
+            }
+            case 5:
+            {
+                message_ment();
                 break;
             }
             case 0:
@@ -486,6 +613,7 @@ void login_menu()
 {
     char     choice[20];
     struct   message near;
+    system("clear");
     do
     {
        // printf("\t\t %s\n",myname);
@@ -493,13 +621,14 @@ void login_menu()
         printf("2:好友管理\n");
         printf("3:我要聊天\n");
         printf("4:查看聊天记录\n");
+        printf("5:消息管理\n");
         printf("0:我要下线\n");
         while(1)
         {  
-            printf("请选择(0 ~ 4)：");
+            printf("请选择(0 ~ 5)：");
             setbuf(stdin,NULL);
             scanf("%s",choice);
-            if((!strcmp(choice,"0")) || (!strcmp(choice,"1")) ||(!strcmp(choice,"2"))||(!strcmp(choice,"3")) || (!strcmp(choice,"4")))
+            if((!strcmp(choice,"0")) || (!strcmp(choice,"1")) ||(!strcmp(choice,"2"))||(!strcmp(choice,"3")) || (!strcmp(choice,"4")) || (!strcmp(choice,"5")))
                 break;    
             else
              {
@@ -529,6 +658,11 @@ void login_menu()
                 view_chat_record();
                 break;
             }
+            case 5:
+            {
+                message_ment();
+                break;
+            }
             case 0:
             {
                 out_line();
@@ -544,8 +678,6 @@ void *sign_func()
         char   recv_buf[BUFSIZE];
         memset(&chat,0,LEN1);
         memset(recv_buf,0,BUFSIZE);
-        //printf("wait\n");
-        //printf("conn_fd:%d\n",conn_fd);
         sleep(1);
         if(recv(conn_fd,recv_buf,BUFSIZE,0) != BUFSIZE)
         {
@@ -612,8 +744,6 @@ void *sign_func()
             }
             case 'o':
             {
-              //  char name[10];
-              //  memcpy(name,chat.from,10);
                 FILE *fp;
                 if((fp = fopen(chat.from,"ab+")) == NULL)
                 {
@@ -652,17 +782,14 @@ void *sign_func()
             }
             case 'b':
             {
-                printf("22222222\n");
                 FILE *fp;
                 if((fp = fopen(chat.to,"ab+")) == NULL)
                 {
                     my_err("fopen",__LINE__);
                     exit(0);
                 }
-                printf("3333333\n");
                 fwrite(&chat,LEN1,1,fp);
                 fclose(fp);
-                printf("44444444\n");
                 printf("\n");
                 printf("%s",my_time());
                 printf("[群：%s]%s 说：%s\n",chat.to,chat.from,chat.news);
@@ -684,39 +811,10 @@ void *sign_func()
             {
                 char choice;
                 printf("\n");
-                printf("[系统提示]用户 %s 想添加您为好友，同意输入y,拒绝输入'n'\n",chat.from);
-                setbuf(stdin,NULL);
-                scanf("%c",&choice);
-                switch(choice)
-                {
-                    case 'y':
-                    {
-                        char near_buf[BUFSIZE];
-                        memset(near_buf,0,BUFSIZE);
-                        chat.type = 't';
-                        memcpy(near_buf,&chat,LEN1);
-                        if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
-                        {
-                            my_err("send",__LINE__);
-                        }
-                        printf("[用户] %s，已经成为您的好友了\n",chat.from);
-                    }
-                    case 'n':
-                    {
-                        printf("\n");
-                        char near_buf[BUFSIZE];
-                        memset(near_buf,0,BUFSIZE);
-                        chat.type = 'e';
-                        memcpy(near_buf,&chat,LEN1);
-                        if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
-                        {
-                            my_err("send",__LINE__);
-                        }
-                        printf("您拒绝了用户 %s 的添加好友请求\n",chat.from);
-                    }
-                }
+                printf("[系统提示]用户 %s 想添加您为好友，请到“消息管理”处理\n",chat.from);
+                if(b <= 9)
+                    chat_t[b++] = chat;
                 break;
-
             }
             case 'e':
             {
@@ -819,6 +917,11 @@ int sign_in()           //登录函数
             memset(myname,0,sizeof(struct user));
             memcpy(myname,apply.username,sizeof(apply.username));
             return 1;
+        }
+        if(strcmp(apply_buf,"w") == 0)
+        {
+            printf("此用户已经在线，拒绝登录\n");
+            return 0;
         }
     }
 }

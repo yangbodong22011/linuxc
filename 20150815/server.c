@@ -365,6 +365,7 @@ void accept_add_friend(struct message chat,int i)
 }
 void add_friend(struct message chat,int i)
 {
+    int k;
     struct users *p1;
     p1 = head->next;
     char  near_buf[BUFSIZE];
@@ -390,10 +391,16 @@ void add_friend(struct message chat,int i)
         save();
     }
     memcpy(near_buf,&near,LEN1);
-    if(send(connect_info[i].fd,near_buf,BUFSIZE,0) != BUFSIZE)
+    for(k = 0;k < 30;k++)
     {
-        my_err("send",__LINE__);
-        pthread_exit(0);
+        if(!strcmp(connect_info[k].name,near.from))
+        {
+            if(send(connect_info[k].fd,near_buf,BUFSIZE,0) != BUFSIZE)
+            {
+                my_err("send",__LINE__);
+                pthread_exit(0);
+            }
+        }
     }
 }
 void view_friend(struct message chat,int i)
@@ -457,29 +464,45 @@ void quit(struct regi_sign account,int i)
 }
 struct users* sign_in(struct regi_sign account,int i)
 {
+    int  k,m = 0;
     struct regi_sign  sign;
     struct users  *p1;
     p1 = head->next;
     sign = account;
-    while(p1)
+    printf("111111111111\n");
+    for(k = 0;k < 30; k++)
     {
-        if((!strcmp((p1->user).username,sign.username)) && (!strcmp(p1->password,sign.password)))
-        {
-            if((send(connect_info[i].fd,"y",BUFSIZE,0)) != BUFSIZE)
-            {
-                my_err("login send",__LINE__);
-            }
-            printf("[用户]%s上线了 \t%s\n",sign.username,my_time());
-            memcpy(connect_info[i].name,sign.username,10);
-            
-            return p1;
-        }
-        p1 = p1->next; //判断未成功，让p1指向下一个
+        if(!strcmp(connect_info[k].name,sign.username))
+            m = m+1;
     }
-    if(p1 == NULL)
+    printf("m:%d\n",m);
+    if(m >= 1)
     {
-        send(connect_info[i].fd,"n",BUFSIZE,0);
+        send(connect_info[i].fd,"w",BUFSIZE,0);
         return NULL;
+    }
+    if(m == 0)
+    {
+        while(p1)
+        {
+            if((!strcmp((p1->user).username,sign.username)) && (!strcmp(p1->password,sign.password)))
+            {
+                if((send(connect_info[i].fd,"y",BUFSIZE,0)) != BUFSIZE)
+                {
+                    my_err("login send",__LINE__);
+                }
+                printf("[用户]%s上线了 \t%s\n",sign.username,my_time());
+                memcpy(connect_info[i].name,sign.username,10);
+            
+                return p1;
+            }
+            p1 = p1->next; //判断未成功，让p1指向下一个
+        }
+        if(p1 == NULL)
+        {
+            send(connect_info[i].fd,"n",BUFSIZE,0);
+            return NULL;
+        }
     }
 }
 char * my_time()
@@ -603,7 +626,7 @@ void *client_t(void *arg)
             pthread_mutex_unlock(&mutex);
             if(p != NULL)
                 break;
-            }
+        }
         if(account.flag == 'q')  //退出
         {
             pthread_mutex_unlock(&mutex);
@@ -689,8 +712,6 @@ void *client_t(void *arg)
                 refuse_add(chat,i);
                 break;
             }
-
-
         }
     }
 }
