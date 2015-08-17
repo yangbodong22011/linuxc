@@ -22,30 +22,30 @@
 #define BUFSIZE 1024
 #define LEN1      sizeof(struct message)
 int       conn_fd;     //只需要一个conn_fd
-int       b=0;
-int       c=10;
+int       b=0;         //添加好友请求数
+int       c=10;        //申请入群数
 int       d=20;
 pthread_mutex_t   mutex;
 struct user 
 {
-    char username[10];
+    char username[10];                 //姓名
 };
 
-struct group
+struct group                           //群组
 {
     char group_name[10];
     char admin_name[10];
     struct user member[10];
 };
 
-struct regi_sign
+struct regi_sign                       //注册登录结构体
 {
     char flag;
     char username[10];
     char password[10];
 
 };
-struct users
+struct users                           //用户信息结构体
 {
     struct       user user;
     char         password[10];
@@ -58,7 +58,7 @@ struct users
 
 
 
-struct message 
+struct message                         //消息结构体
 {
     char         type;
     char         from[10];
@@ -69,21 +69,21 @@ struct message
     struct       group group;
     char         news[500];
 };
-int              friend_num;  //好友数，全局变量
-char             myname[10];        //存自己用户的名字
-struct  user     friend[10];  
+int              friend_num;           //好友数，全局变量
+char             myname[10];           //存自己用户的名字
+struct  user     friend[10];         
 struct  user     member[10];
 struct  group    group[3];
-struct message   chat_t[30];    //加好友，离线消息，群管理
+struct message   chat_t[30];           //加好友，离线消息，群管理
 
-char * my_time()
+char * my_time()                       //自定义时间函数
 {
     time_t  now;
     time(&now);
     return (ctime(&now));
 }
 
-int my_input(char *buf,int len)      //自定义输入函数
+int my_input(char *buf,int len)        //自定义输入函数
 {
     int i;
     int c;
@@ -124,7 +124,7 @@ int message_ment();   //消息管理
 void add_friend_req();//添加好友请求
 void accept_add(int);//接受添加
 
-void accept_add(int k)
+void accept_add(int k) //接受添加
 {
     int t;
     char choice;
@@ -165,7 +165,7 @@ void accept_add(int k)
     }
     for(t = k;t < 10;t++)
     {
-        chat_t[t] = chat_t[t+1];
+        chat_t[t] = chat_t[t+1]; //之后将我的消息提醒向前挪
     }
         b--;
 }
@@ -240,19 +240,19 @@ void view_chat_record()     //查看聊天记录
         printf("未找到您说的好友或群\n");
         return;
     }
-    while((fread(&near,LEN1,1,fp) != -1) && (!feof(fp)))
+    while((fread(&near,LEN1,1,fp) != -1) && (!feof(fp))) //找到相应的文件读出内容
     {
         printf("%s %s 说 %s\n ",near.time,near.from,near.news);
     }
     fclose(fp);
 }
-int public_chat()
+int public_chat()                        //群聊
 {
     char   near_buf[BUFSIZE];
     struct message near;
     FILE   *fp;
 
-    memset(&near,0,LEN1);
+    memset(&near,0,LEN1);                //群聊消息结构体的初始化 
     memset(near_buf,0,BUFSIZE);
     near.type = 'b';
     memcpy(near.from,myname,10);
@@ -267,14 +267,14 @@ int public_chat()
         printf("%s说：",near.from);
         memset(near.news,0,100);
         my_input(near.news,100);
-        if((fp = fopen(near.to,"ab+")) == NULL)
+        if((fp = fopen(near.to,"ab+")) == NULL)  //没有文件就自己创建文件
         {
                 my_err("fopen",__LINE__);
                 exit(0);
         }
         fwrite(&near,LEN1,1,fp);
         fclose(fp);
-        if(strcmp(near.news,"quit") == 0)
+        if(strcmp(near.news,"quit") == 0)        //当输入quit,表示退出
         {
             return 0;
         }
@@ -288,7 +288,7 @@ int public_chat()
 
 
 }
-int view_group()
+int view_group()                                 //查看自己的群的信息
 {
     char   near_buf[BUFSIZE];
     struct message near;
@@ -307,14 +307,14 @@ int view_group()
     }
 
 }
-int build_group()
+int build_group()                                //建群
 {
     int    i,k;
     int    number;
     char   near_buf[BUFSIZE];
     struct message near;
 
-    memset(&near,0,LEN1);
+    memset(&near,0,LEN1);                        //对群的消息的结构体初始化
     memset(near_buf,0,BUFSIZE);
     near.type = 'j';
     memcpy(near.from,myname,10);
@@ -338,13 +338,13 @@ int build_group()
     }
 
 }
-int pri_chat()
+int pri_chat()                                   //私聊
 {
     char   near_buf[BUFSIZE];
     struct message near;
     FILE   *fp;
-
-    memset(&near,0,LEN1);
+ 
+    memset(&near,0,LEN1);                        //私聊消息初始化
     memset(near_buf,0,BUFSIZE);
     near.type = 'o';
     memcpy(near.from,myname,10);
@@ -355,7 +355,7 @@ int pri_chat()
     printf("-------你正在与 %s 聊天(如果想退出，输入quit)-------\n",near.to);
     while(1)
     {
-        printf("%s",my_time());
+        printf("%s",my_time());                  //只要不输入quit就一直让它循环
         printf("%s说：",near.from);
         memset(near.news,0,100);
         my_input(near.news,100);
@@ -438,7 +438,7 @@ int chat_with()
     }while(strcmp(choice,"-1"));
 
 }
-void del_friend()
+void del_friend()                   //删除好友需要将好友信息存到消息结构体中       
 {
     char   near_buf[BUFSIZE];
     struct message near;
@@ -457,7 +457,7 @@ void del_friend()
     }
 
 }
-void out_line()
+void out_line()                     //下线，
 {
     char   near_buf[BUFSIZE];
     struct message near;
@@ -472,11 +472,11 @@ void out_line()
         my_err("send",__LINE__);
         exit(0);
     }
-    close(conn_fd);
+    close(conn_fd);                 //close 掉conn_fd
     exit(0);
 
 }
-int add_friend()
+int add_friend()                     //添加好友第一次请求
 {
     char   near_buf[BUFSIZE];
     struct message near;
@@ -495,7 +495,7 @@ int add_friend()
     }
 
 }
-int view_online_friend()
+int view_online_friend()            //查看在线好友
 {
     char   near_buf[BUFSIZE];
     struct message near;
@@ -513,7 +513,7 @@ int view_online_friend()
 }
 
 
-int view_friend()
+int view_friend()                   //查看所有好友
 {
     char   near_buf[BUFSIZE];
     struct message near;
@@ -530,7 +530,7 @@ int view_friend()
     }
 }
 
-int admin_friend()
+int admin_friend()                  //好友管理函数
 {
     char   choice[20];
     system("clear");
@@ -589,7 +589,7 @@ int admin_friend()
 
     }while(strcmp(choice,"-1"));
 }
-int near_friend()
+int near_friend()            //附近的人
 {
     char   near_buf[BUFSIZE];
     struct message near;
@@ -605,7 +605,7 @@ int near_friend()
         exit(0);
     }
 }
-void login_menu()
+void login_menu()            //登录主菜单
 {
     char     choice[20];
     struct   message near;
@@ -683,7 +683,7 @@ void *sign_func()
         memcpy(&chat,recv_buf,BUFSIZE);
         switch(chat.type)
         {
-            case 'f':
+            case 'f'://附近的人
             {
                 int i;
                 printf("\n");
@@ -698,7 +698,7 @@ void *sign_func()
                 printf("\n");
                 break;
             }
-            case 'v':
+            case 'v'://查看所有好友
             {
                 int i ;
                 printf("\n");
@@ -712,13 +712,13 @@ void *sign_func()
                 printf("\n");
                 break;
             }
-            case 't':
+            case 't'://添加好友被同意
             {
                 printf("\n");
                 printf("[用户]%s 同意了您的添加好友请求，已经成为您的好友了\n",chat.to);
                 break;
             }
-            case 'z':
+            case 'z'://查看在线好友
             {
                 int i;
                 printf("\n");
@@ -732,13 +732,13 @@ void *sign_func()
                 printf("\n");
                 break;
             }
-            case 's':
+            case 's'://删除好友
             {
                 printf("\n");
                 printf("[用户]%s 已经被您删除\n",chat.to);
                 break;
             }
-            case 'o':
+            case 'o'://私聊
             {
                 FILE *fp;
                 if((fp = fopen(chat.from,"ab+")) == NULL)
@@ -753,14 +753,14 @@ void *sign_func()
                 printf("[私]%s 说：%s\n",chat.from,chat.news);
                 break;
             }
-            case 'j':
+            case 'j'://建群  
             {
                 printf("\n");
                 printf("%s",my_time());
                 printf("[系统提示] 群‘%s’ 已经建立成功\n",chat.group.group_name);
                 break;
             }
-            case 'c':
+            case 'c'://查看群信息
             {
                 int k;
                 printf("\n");
@@ -776,7 +776,7 @@ void *sign_func()
                 printf("\n");
                 break;
             }
-            case 'b':
+            case 'b'://群消息通知
             {
                 FILE *fp;
                 if((fp = fopen(chat.to,"ab+")) == NULL)
@@ -791,34 +791,34 @@ void *sign_func()
                 printf("[群：%s]%s 说：%s\n",chat.to,chat.from,chat.news);
                 break;
             }
-            case 'd':
+            case 'd'://离线消息
             {
                 printf("\n");
                 printf("好友 %s 离线了，你现在发送的消息是离线消息。\n",chat.to);
                 break;
             }
-            case 'm':
+            case 'm'://添加好友失败的原因
             {
                 printf("\n");
                 printf("对不起，未找到 %s 用户，或者他不在线",chat.to);
                 break;
             }
-            case 'y':
+            case 'y'://添加好友请求提醒            
             {
                 char choice;
                 printf("\n");
-                printf("[系统提示]用户 %s 想添加您为好友，请到“消息管理”处理\n",chat.from);
+                printf("[系统提示]用户 %s 想添加您为好友，请到“消息管理-添加好友请求”处理\n",chat.from);
                 if(b <= 9)
                     chat_t[b++] = chat;
                 break;
             }
-            case 'e':
+            case 'e'://添加好友被拒绝
             {
                 printf("\n");
                 printf("[系统提示]：用户 %s 拒绝了您的添加好友请求\n",chat.to);
                 break;
             }
-            case 'x':
+            case 'x'://离线消息的收取
             {
                 FILE *fp;
                 if((fp = fopen(chat.from,"ab+")) == NULL)
@@ -831,6 +831,12 @@ void *sign_func()
                 printf("\n");
                 printf("%s",my_time());
                 printf("[离线]%s 说：%s\n",chat.from,chat.news);
+                break;
+            }
+            case 'r'://进群通知
+            {
+                printf("\n");
+                printf("[系统通知] 用户“%s”邀请您加入了群“%s”\n",chat.from,chat.group.group_name);
                 break;
             }
 
