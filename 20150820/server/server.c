@@ -97,7 +97,73 @@ void leave_message_func(struct regi_sign,int);//离线消息
 void apply_add_group(struct message,int);
 void accept_add_group(struct message,int);
 void refuse_add_group(struct message,int);
+void my_status(struct message,int);
+int my_zone_access(struct message,int);
 
+int my_zone_access(struct message chat,int i)
+{
+    struct message near;
+    char   near_buf[BUFSIZE];
+    int    k;
+    memset(&near,0,LEN1);
+    memset(near_buf,0,BUFSIZE);
+    near = chat;
+    for(k = 0;k < 30;k++)
+    {
+        if(!strcmp(near.from,connect_info[k].name))
+            break;
+    }
+    if(near.type == '8')
+    {
+        memcpy(near_buf,&near,LEN1);
+        send(connect_info[k].fd,near_buf,BUFSIZE,0);
+        return 0;
+    }
+    if(near.type == '9')
+    {
+        memcpy(near_buf,&near,LEN1);
+        send(connect_info[k].fd,near_buf,BUFSIZE,0);
+        return 0;
+    }
+    if(near.type == '0')
+    {
+        memcpy(near_buf,&near,LEN1);
+        send(connect_info[k].fd,near_buf,BUFSIZE,0);
+        return 0;
+    }
+
+}
+void my_status(struct message chat,int i)
+{
+    struct message near;
+    struct users *p1;
+    char   near_buf[BUFSIZE];
+    memset(&near,0,LEN1);
+    memset(near_buf,0,BUFSIZE);
+    near = chat;
+    p1 = head->next;
+    int k,j;
+
+    while(p1)
+    {
+        if(!strcmp((p1->user).username,near.from))
+        {
+            for(k = 0;k < 10;k++)
+            {
+                for(j = 0;j < 30;j++)
+                {
+                    if(!strcmp((p1->friend)[k].username,connect_info[j].name))
+                    {
+                        memcpy(near_buf,&near,LEN1);
+                        send(connect_info[j].fd,near_buf,BUFSIZE,0);
+                        break;
+                    }
+                }
+            }
+        }
+        p1 = p1->next;
+    }
+}
 void refuse_add_group(struct message chat,int i)
 {
     int k;
@@ -145,10 +211,6 @@ void accept_add_group(struct message chat,int i)
     }
     for(k = 0;k < 10;k++)
     {
-        printf("name[%d].username:%s\n",k,name[k].username);
-    }
-    for(k = 0;k < 10;k++)
-    {
         p2 = head->next;
         while(p2)
         {
@@ -161,7 +223,6 @@ void accept_add_group(struct message chat,int i)
                     {
                         memcpy(&(p2->group)[m].member[(p2->group)[m].member_num],&near.from,10);
                         t = (p2->group)[m].member_num;
-                        printf("t:%d\n",t);
                         (p2->group)[m].member_num = (p2->group)[m].member_num + 1;
                         flag = 1;
                         break;
@@ -187,11 +248,8 @@ void accept_add_group(struct message chat,int i)
         if(!(strcmp(near.from,(p3->user).username)))      //查找到每一个成员，将他们的组直接赋值
         {
             (p3->group)[p3->group_num] = group;
-            printf("111111\n");
             (p3->group)[p3->group_num].member_num = t+1;
             (p3->group_num)++;
-            printf("%d\n",(p3->group)[p3->group_num].member_num);
-            printf("222222\n");
             break;
         }
         p3 = p3->next;
@@ -305,7 +363,6 @@ void public_chat(struct message chat ,int i)                     //群聊
                 {
                     for(j = 0;j < 30;j++)
                     {
-                        printf("%s\n",(p1->group)[k].member[j].username);
                         if((!strcmp(connect_info[j].name,(p1->group)[k].member[j].username)) && (connect_info[j].fd != connect_info[i].fd))
                        // if(!strcmp(connect_info[j].name,(p1->group)[k].member[j].username)) 找到每一个组成员
                         {
@@ -866,8 +923,7 @@ struct users* read_input()                                      //将文件中�
     struct users *p1,*p2;
     if((fp = fopen("userlist","rb")) == NULL)
     {
-        my_err("fopen",__LINE__);
-        exit(0);
+        fp = fopen("userlist","ab+");
     }
     p1 = (struct users *)malloc(LEN);
     p2 = (struct users *)malloc(LEN);
@@ -1013,12 +1069,32 @@ void *client_t(void *arg)                                       //线程函数�
             }
             case 'a':   //同意入群
             {
-                accept_add_group(chat,i);
+                accept_add_friend(chat,i);
                 break;
             }
             case 'i':
             {
                 refuse_add_group(chat,i);
+                break;
+            }
+            case '7':
+            {
+                my_status(chat,i);
+                break;
+            }
+            case '8':
+            {
+                my_zone_access(chat,i);
+                break;
+            }
+            case '9':
+            {
+                my_zone_access(chat,i);
+                break;
+            }
+            case '0':
+            {
+                my_zone_access(chat,i);
                 break;
             }
         }

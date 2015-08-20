@@ -126,7 +126,116 @@ int message_ment();   //消息管理
 void add_friend_req();//添加好友请求
 void accept_add(int);//接受添加
 void apply_add_group();//申请入群
+void my_status();
+int my_zone();
+void my_zone_access(int);
 
+void my_zone_access(int k)
+{
+    int t;
+    char choice;
+    struct message chat;
+    chat = chat_t[k];
+    printf("“赞一下”输入‘1’,“踩一下”输入‘2’，“评论”输入‘3’,退出输入“0”:",chat.from);
+    setbuf(stdin,NULL);
+    scanf("%c",&choice);
+    switch(choice)
+    {
+        case '1':
+        {
+            char near_buf[BUFSIZE];
+            memset(near_buf,0,BUFSIZE);
+            chat.type = '8';
+            memcpy(&chat.to,myname,10);
+            memcpy(near_buf,&chat,LEN1);
+            if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
+            {
+                my_err("send",__LINE__);
+            }
+            printf("您赞了好友“%s”的状态\n",chat.from);
+            break;
+        }
+        case '2':
+        {
+            char near_buf[BUFSIZE];
+            memset(near_buf,0,BUFSIZE);
+            chat.type = '9';
+            memcpy(&chat.to,myname,10);
+            memcpy(near_buf,&chat,LEN1);
+            if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
+            {
+                my_err("send",__LINE__);
+            }
+            printf("您踩了好友“%s”的状态\n",chat.from);
+            break;
+        }
+        case '3':
+        {  
+            char near_buf[BUFSIZE];
+            memset(near_buf,0,BUFSIZE);
+            memset(chat.news,0,100);
+            printf("请输入您要评论的内容：");
+            setbuf(stdin,NULL);
+            scanf("%s",&chat.news);
+            chat.type = '0';
+            memcpy(&chat.to,myname,10);
+            memcpy(near_buf,&chat,LEN1);
+            if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
+            {
+                my_err("send",__LINE__);
+            }
+            printf("您评论了好友“%s”的状态\n",chat.from);
+            break;
+        }
+        case '0':
+        {
+            break;
+        }
+    }
+}
+int my_zone()
+{
+    int k,t,choice;
+    system("clear");
+    printf("-------------------%s的空间----------------------\n",myname);
+    printf("%s",my_time());
+    for(k = 20,t = 1;k < d;k++,t++)
+    {
+        printf("[序号]  %d  \n好友“%s”发表状态:%s\n",t,chat_t[k].from,chat_t[k].news);
+    }
+    printf("\n\n\n\n\n");
+    printf("请输入要“点赞”或“踩一下”或“评论”的序号(序号为‘0’退出空间)：");
+    scanf("%d",&choice);
+    if(choice == 0)
+    {
+        return 0;
+    }
+    my_zone_access(choice+19);
+}
+
+void my_status()
+{
+    char   near_buf[BUFSIZE];
+    struct message near;
+    FILE   *fp;
+ 
+    memset(&near,0,LEN1);                        
+    memset(near_buf,0,BUFSIZE);
+    near.type = '7';
+    memcpy(near.from,myname,10);
+    system("clear");
+    printf("说句话写下自己此刻的心情吧:\n");
+    memset(near.news,0,100);
+    my_input(near.news,100);
+    memcpy(near_buf,&near,LEN1);
+    if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
+    {
+        my_err("send",__LINE__);
+        exit(0);
+    }
+
+}
+    
 void apply_add_group()
 {
     char   near_buf[BUFSIZE];
@@ -710,13 +819,15 @@ void login_menu()            //登录主菜单
         printf("3:我要聊天\n");
         printf("4:查看聊天记录\n");
         printf("5:消息管理\n");
+        printf("6:发个状态\n");
+        printf("7:我的空间\n");
         printf("0:我要下线\n");
         while(1)
         {  
             printf("请选择(0 ~ 5)：");
             setbuf(stdin,NULL);
             scanf("%s",choice);
-            if((!strcmp(choice,"0")) || (!strcmp(choice,"1")) ||(!strcmp(choice,"2"))||(!strcmp(choice,"3")) || (!strcmp(choice,"4")) || (!strcmp(choice,"5")))
+            if((!strcmp(choice,"0")) || (!strcmp(choice,"1")) ||(!strcmp(choice,"2"))||(!strcmp(choice,"3")) || (!strcmp(choice,"4")) || (!strcmp(choice,"5"))||(!strcmp(choice,"6"))||(!strcmp(choice,"7")))
                 break;    
             else
              {
@@ -749,6 +860,16 @@ void login_menu()            //登录主菜单
             case 5:
             {
                 message_ment();
+                break;
+            }
+            case 6:
+            {
+                my_status();
+                break;
+            }
+            case 7:
+            {
+                my_zone();
                 break;
             }
             case 0:
@@ -987,6 +1108,35 @@ void *sign_func()
                 printf("到底是多孤单，才会和自己聊天,去附近的人看看吧！\n");
                 break;
             }
+            case '7'://好友有新动态
+            {  
+                printf("\n");
+                printf("[系统提示]好友 %s 有了新动态，快去空间看看吧\n",chat.from);
+                    chat_t[d++] = chat;
+                break;
+            }
+            case '8'://状态被赞
+            {
+                printf("\n");
+                printf("%s",my_time());
+                printf("[系统提示]好友“%s”赞了您的状态^_^\n",chat.to);
+                break;
+            }
+            case '9'://状态被踩
+            {
+                printf("\n");
+                printf("%s",my_time());
+                printf("[系统提示]好友“%s”踩了您的状态~~~\n",chat.to);
+                break;
+            }
+            case '0'://状态被评论
+            {
+                printf("\n");
+                printf("%s",my_time());
+                printf("[系统提示]好友“%s”评论了您的状态:\n“%s”说:%s\n",chat.to,chat.to,chat.news);
+                break;
+            }
+                
 
         }
     }
