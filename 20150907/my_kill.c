@@ -21,11 +21,11 @@ int main(int argc,char *argv[])
     {
         if(!strcmp(argv[i],"-s"))
         {
-            signum = atoi(argv[i+1]);
+            signum = atoi(argv[i+1]);       //信号量就是-s之后的数值
             break;
         }
     }
-    if(argc == 2)
+    if(argc == 2)                                                         
     {
         pid = atoi(argv[1]);
     }
@@ -42,8 +42,8 @@ int main(int argc,char *argv[])
     }
 
 
-    if(kill(pid,signum) < 0)
-    {
+    if(kill(pid,signum) < 0)        //kill函数pid分为四类，>0 表示某个进程的pid，=0 表示进程将信号发送给进程组中的所有进程
+    {                               //=-1 表示将信号广播给除了init进程和自己的所有进程 <-1 表示发送给属于进程组-pid的的进程
         perror("kill");
         exit(1);
     }

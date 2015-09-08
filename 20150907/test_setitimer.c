@@ -40,7 +40,7 @@ int main(int argc,char *argv[])
     value.it_interval.tv_sec = 5;
     value.it_interval.tv_usec = 0;
 
-    setitimer(ITIMER_REAL,&value,NULL);       
+    setitimer(ITIMER_REAL,&value,NULL);        //此函数相当于alarm，也用来设置定时器，且根据which不同的参数会有不同的信号返回       
     setitimer(ITIMER_PROF,&value,NULL);
 
     while(1);

@@ -22,7 +22,7 @@ void fun2(void)
 {
     char *s = "world";
     if(strcmp(s,"World")!=0)
-    longjmp(jmpbuffer,1);
+    longjmp(jmpbuffer,1);          //因为setjmp会在jmpbuffer中保存栈的状态，调用longjump之后返回的地方其实是原来栈的状态，它的第二个参数就是setjmp的返回值
 }
 
 
@@ -30,7 +30,7 @@ int main(void)
 {
     int i = 0;
     int j = 0;
-    i = setjmp(jmpbuffer);
+    i = setjmp(jmpbuffer);         //在此调用setjmp函数
     if(i==0)
     {
         printf("first run\n");
