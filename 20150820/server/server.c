@@ -15,7 +15,7 @@
 #include<time.h>
 #include<pthread.h>
 #include"my_recv.c"
-#define SERV_PORT        4507  //端口号
+#define SERV_PORT        8888  //端口号
 #define LISTENQ          30    //accept队列长度
 #define BUFSIZE          1024  
 #define LEN     sizeof(struct users)
@@ -131,7 +131,6 @@ int my_zone_access(struct message chat,int i)
         send(connect_info[k].fd,near_buf,BUFSIZE,0);
         return 0;
     }
-
 }
 void my_status(struct message chat,int i)
 {
@@ -178,7 +177,6 @@ void refuse_add_group(struct message chat,int i)
         if(!strcmp(connect_info[k].name,near.from))
             send(connect_info[k].fd,near_buf,BUFSIZE,0);
     }
-
 }
 void accept_add_group(struct message chat,int i)
 {
@@ -263,10 +261,6 @@ void accept_add_group(struct message chat,int i)
             send(connect_info[k].fd,near_buf,BUFSIZE,0);
         }
     }
-    
-    
-    
-
 }
 void apply_add_group(struct message chat,int i)
 {
@@ -364,7 +358,6 @@ void public_chat(struct message chat ,int i)                     //群聊
                     for(j = 0;j < 30;j++)
                     {
                         if((!strcmp(connect_info[j].name,(p1->group)[k].member[j].username)) && (connect_info[j].fd != connect_info[i].fd))
-                       // if(!strcmp(connect_info[j].name,(p1->group)[k].member[j].username)) 找到每一个组成员
                         {
                             memcpy(near_buf,&near,LEN1);
                             if(send(connect_info[j].fd,near_buf,BUFSIZE,0) != BUFSIZE)
@@ -409,7 +402,6 @@ void view_group(struct message chat,int i)             //查看我的组
         my_err("send",__LINE__);
         pthread_exit(0);
     }
-
 }
 void build_group(struct message chat,int i)                  //建群
 {
@@ -528,7 +520,6 @@ int pri_chat(struct message chat,int i)                                //私聊
         memcpy(near_buf,&near,LEN1);
         send(connect_info[i].fd,near_buf,BUFSIZE,0);
     }
-
 }
 int del_friend(struct message chat,int i)                     //删除好友
 { 
@@ -654,7 +645,6 @@ void refuse_add(struct message chat,int i)         //拒绝添加
             send(connect_info[k].fd,near_buf,BUFSIZE,0);
         }
     }
-    
 }
 int accept_add_friend(struct message chat,int i)   //第一次的添加消息的转发
 {
@@ -709,7 +699,6 @@ int accept_add_friend(struct message chat,int i)   //第一次的添加消息的
         memcpy(near_buf,&near,LEN1);
         send(connect_info[i].fd,near_buf,BUFSIZE,0);  
     }
-
 }
 void add_friend(struct message chat,int i)        //同意添加
 {
@@ -915,8 +904,6 @@ void *sign_quit()                                               //服务器退�
         exit(0);
     }
 }
-
-
 struct users* read_input()                                      //将文件中的信息读到链表
 {
     FILE *fp;
@@ -1069,7 +1056,7 @@ void *client_t(void *arg)                                       //线程函数�
             }
             case 'a':   //同意入群
             {
-                accept_add_friend(chat,i);
+                accept_add_group(chat,i);
                 break;
             }
             case 'i':
@@ -1100,8 +1087,6 @@ void *client_t(void *arg)                                       //线程函数�
         }
     }
 }
-
-
 int main(int argc,char *argv[])
 {
     int                          sock_fd,conn_fd;

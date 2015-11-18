@@ -58,8 +58,6 @@ struct users                           //用户信息结构体
     struct users *next;
 };
 
-
-
 struct message                         //消息结构体
 {
     char         type;
@@ -136,7 +134,7 @@ void my_zone_access(int k)
     char choice;
     struct message chat;
     chat = chat_t[k];
-    printf("“赞一下”输入‘1’,“踩一下”输入‘2’，“评论”输入‘3’,退出输入“0”:",chat.from);
+    printf("“赞一下”输入‘1’,“踩一下”输入‘2’，“评论”输入‘3’,退出输入“0”:");
     setbuf(stdin,NULL);
     scanf("%c",&choice);
     switch(choice)
@@ -152,7 +150,7 @@ void my_zone_access(int k)
             {
                 my_err("send",__LINE__);
             }
-            printf("您赞了好友“%s”的状态\n",chat.from);
+            printf("您赞了“%s”的状态\n",chat.from);
             break;
         }
         case '2':
@@ -166,7 +164,7 @@ void my_zone_access(int k)
             {
                 my_err("send",__LINE__);
             }
-            printf("您踩了好友“%s”的状态\n",chat.from);
+            printf("您踩了“%s”的状态\n",chat.from);
             break;
         }
         case '3':
@@ -176,7 +174,7 @@ void my_zone_access(int k)
             memset(chat.news,0,100);
             printf("请输入您要评论的内容：");
             setbuf(stdin,NULL);
-            scanf("%s",&chat.news);
+            scanf("%s",chat.news);
             chat.type = '0';
             memcpy(&chat.to,myname,10);
             memcpy(near_buf,&chat,LEN1);
@@ -184,7 +182,7 @@ void my_zone_access(int k)
             {
                 my_err("send",__LINE__);
             }
-            printf("您评论了好友“%s”的状态\n",chat.from);
+            printf("您评论了“%s”的状态\n",chat.from);
             break;
         }
         case '0':
@@ -201,7 +199,7 @@ int my_zone()
     printf("%s",my_time());
     for(k = 20,t = 1;k < d;k++,t++)
     {
-        printf("[序号]  %d  \n好友“%s”发表状态:%s\n",t,chat_t[k].from,chat_t[k].news);
+        printf("[序号]  %d  \n“%s”发表状态:%s\n",t,chat_t[k].from,chat_t[k].news);
     }
     printf("\n\n\n\n\n");
     printf("请输入要“点赞”或“踩一下”或“评论”的序号(序号为‘0’退出空间)：");
@@ -227,6 +225,7 @@ void my_status()
     printf("说句话写下自己此刻的心情吧:\n");
     memset(near.news,0,100);
     my_input(near.news,100);
+    chat_t[d++] = near;
     memcpy(near_buf,&near,LEN1);
     if(send(conn_fd,near_buf,BUFSIZE,0) != BUFSIZE)
     {
@@ -431,7 +430,7 @@ void view_chat_record()     //查看聊天记录
     my_input(name,10);
     if((fp = fopen(name,"r")) == NULL)
     {
-        printf("未找到您说的好友或群\n");
+        printf("未找到您说的好友或群的聊天记录，请查证\n");
         return;
     }
     while((fread(&near,LEN1,1,fp) != -1) && (!feof(fp))) //找到相应的文件读出内容
@@ -513,8 +512,13 @@ int build_group()                                //建群
     near.type = 'j';
     memcpy(near.from,myname,10);
     memcpy(near.time,my_time(),30);
-    printf("请输入要建立的群名称:\n");
-    my_input(near.group.group_name,10);
+    do
+    {
+        printf("请输入要建立的群名称(大于十个字符不合法):\n");
+        setbuf(stdin,NULL);
+        memset(near.group.group_name,0,10);
+        scanf("%s",near.group.group_name);
+    }while(strlen(near.group.group_name) >= 10);
     printf("请输入群成员个数(0-9):");
     scanf("%d",&number);
     memcpy(&near.group.member_num,&number,4);
@@ -824,7 +828,7 @@ void login_menu()            //登录主菜单
         printf("0:我要下线\n");
         while(1)
         {  
-            printf("请选择(0 ~ 5)：");
+            printf("请选择(0 ~ 7)：");
             setbuf(stdin,NULL);
             scanf("%s",choice);
             if((!strcmp(choice,"0")) || (!strcmp(choice,"1")) ||(!strcmp(choice,"2"))||(!strcmp(choice,"3")) || (!strcmp(choice,"4")) || (!strcmp(choice,"5"))||(!strcmp(choice,"6"))||(!strcmp(choice,"7")))
@@ -1119,21 +1123,21 @@ void *sign_func()
             {
                 printf("\n");
                 printf("%s",my_time());
-                printf("[系统提示]好友“%s”赞了您的状态^_^\n",chat.to);
+                printf("[系统提示]“%s”赞了您的状态^_^\n",chat.to);
                 break;
             }
             case '9'://状态被踩
             {
                 printf("\n");
                 printf("%s",my_time());
-                printf("[系统提示]好友“%s”踩了您的状态~~~\n",chat.to);
+                printf("[系统提示]“%s”踩了您的状态~~~\n",chat.to);
                 break;
             }
             case '0'://状态被评论
             {
                 printf("\n");
                 printf("%s",my_time());
-                printf("[系统提示]好友“%s”评论了您的状态:\n“%s”说:%s\n",chat.to,chat.to,chat.news);
+                printf("[系统提示]“%s”评论了您的状态:\n“%s”说:%s\n",chat.to,chat.to,chat.news);
                 break;
             }
                 

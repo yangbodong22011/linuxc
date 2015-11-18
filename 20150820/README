@@ -1,0 +1,8 @@
+     *****聊天室使用教程*****
+1：服务器端：
+	$ gcc server.c -o server -lpthread 
+	$ ./server 
+	退出服务器输入:quit
+2：客户端：
+	$ gcc client.c -o client -lpthread
+	$ ./client -a serverIP -p 8888 [8888为默认端口号，可以通过修该server.c中18行更改]
